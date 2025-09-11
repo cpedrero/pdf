@@ -1,8 +1,11 @@
 package org.example;
 
+import com.google.cloud.functions.BackgroundFunction;
+import com.google.cloud.functions.Context;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
+import com.google.gson.Gson;
 import org.docx4j.Docx4J;
 import org.docx4j.openpackaging.exceptions.Docx4JException;
 import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
@@ -11,11 +14,28 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.logging.Logger;
 
+public class PdfConverter implements BackgroundFunction<PdfConverter.GCSEvent> {
 
-public class Downloader {
-  private static final Logger logger = Logger.getLogger(Downloader.class.getName());
+  private static final Gson gson = new Gson();
 
-  public static void convert(String bucketName, String objectName) {
+  @Override
+  public void accept(GCSEvent event, Context context) {
+    System.out.println("Bucket: " + event.bucket);
+    System.out.println("File: " + event.name);
+    convert(event.bucket, event.name);
+  }
+
+  public static class GCSEvent {
+    String bucket;
+    String name;
+    String contentType;
+    String timeCreated;
+    String updated;
+  }
+
+  private static final Logger logger = Logger.getLogger(PdfConverter.class.getName());
+
+  private static void convert(String bucketName, String objectName) {
     try {
       final byte[] bytDoc = downloadFile(bucketName, objectName);
 
@@ -58,4 +78,3 @@ public class Downloader {
     System.out.println("PDF subido a bucket: " + bucketName + " con nombre: " + objectName);
   }
 }
-
